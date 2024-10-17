@@ -1,35 +1,36 @@
 import pandas as pd
-import matplotlib.pyplot as plt
+import numpy as np
+
+
 
 data_path = 'project_data/'
 
-# Load only the relevant columns: date/time and wave height (WVHT)
-df = pd.read_csv(data_path + '44095h2012.txt', sep=r'\s+', header=0, skiprows=[1],
-                 usecols=['#YY', 'MM', 'DD', 'hh', 'mm', 'WVHT'])
+dates = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 
-# Check the DataFrame structure
-print(df.head())  # Inspect the first few rows
+for date in dates:
 
-# Convert date and time columns to string for plotting
-df['Date'] = df['#YY'].astype(str) + '-' + df['MM'].astype(str).str.zfill(2) + '-' + df['DD'].astype(str).str.zfill(2)
-df['Time'] = df['hh'].astype(str).str.zfill(2) + ':' + df['mm'].astype(str).str.zfill(2)
+    # Load only the relevant columns: date/time and wave height (WVHT)
+    df = pd.read_csv(data_path + '44095h' + str(date) + '.txt', sep=r'\s+', header=0, skiprows=[1], usecols=['WVHT'])
 
-# Create a new DataFrame for plotting
-plot_df = df[['Date', 'Time', 'WVHT']]
+    df = df.dropna(subset=['WVHT'])
+    df_filtered = df[df['WVHT'] != 99]
 
-# Plot the wave height against the date and time separately
-plt.figure(figsize=(10, 6))
+    # Sort WVHT in descending order
+    df_sorted = df_filtered['WVHT'].sort_values(ascending=False)
+    top_one_third_count = int(len(df_sorted) / 3)
+    top_one_third_waves = df_sorted[:top_one_third_count]
 
-# Plot the wave height with markers for each timestamp
-for index, row in plot_df.iterrows():
-    plt.scatter(row['Date'] + ' ' + row['Time'], row['WVHT'], color='b', label='Wave Height' if index == 0 else "")
 
-plt.xlabel('Date and Time')
-plt.ylabel('Wave Height (m)')
-plt.title('Wave Height over Time')
-# plt.xticks(rotation=45)  # Rotate x-axis labels for better readability
-plt.legend()
-plt.tight_layout()  # Adjust layout to prevent clipping of tick-labels
+    average_wvht = df_filtered['WVHT'].mean()
+    rms_wvht = np.sqrt(np.mean(df_filtered['WVHT']**2))
+    average_top_one_third = top_one_third_waves.mean()
+    max_wvht = df_filtered['WVHT'].max()
 
-# Show the plot
-plt.show()
+    # Display the average
+    print("Data for the year " + str(date))
+    print(f"Average Wave Height (WVHT): {average_wvht:.2f}")
+    print(f"Root Mean Squared Wave Height (WVHT): {rms_wvht:.2f}")
+    print(f"Significant Wave Height (WVHT): {average_top_one_third:.2f}")
+    print(f"Maximum Wave Height (WVHT): {max_wvht:.2f}")
+    print(" ")
+
