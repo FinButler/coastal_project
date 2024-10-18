@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import rayleigh
 
 # Data path
 data_path = 'project_data/'
@@ -37,23 +38,44 @@ overall_rms_wvht = np.sqrt(np.mean(all_wave_heights**2))
 overall_significant_wvht = top_one_third_waves.mean()
 overall_max_wvht = all_wave_heights.max()
 
-# Prepare data for the bar chart
-categories = ['Average Wave Height (H_z)', 'RMS Wave Height (H_rms)',
-              'Significant Wave Height (H_s)', 'Maximum Wave Height (H_max)']
-values = [overall_avg_wvht, overall_rms_wvht, overall_significant_wvht, overall_max_wvht]
-
-# Plot the horizontal bar chart
+# Plot the horizontal bar chart for wave height statistics
 plt.figure(figsize=(8, 6))
-bars = plt.barh(categories, values, color=['blue', 'green', 'red', 'purple'])
+bars = plt.barh(['Average Wave Height (H_z)', 'RMS Wave Height (H_rms)',
+                 'Significant Wave Height (H_s)', 'Maximum Wave Height (H_max)'],
+                [overall_avg_wvht, overall_rms_wvht, overall_significant_wvht, overall_max_wvht],
+                color=['blue', 'green', 'red', 'purple'])
 
 # Add values to each bar
 for bar in bars:
-    plt.text(bar.get_width() + 0.05, bar.get_y() + bar.get_height()/2,
+    plt.text(bar.get_width() + 0.05, bar.get_y() + bar.get_height() / 2,
              f'{bar.get_width():.2f}', va='center')
 
-# Labels and title
+# Labels and title for bar chart
 plt.xlabel('Wave Height (meters)')
 plt.title('Wave Height Statistics Averaged Over All Years')
 
-# Display the plot
+# Display the bar chart
+plt.show()
+
+# Now plot the histogram and Rayleigh PDF overlay
+
+# Plot the histogram of wave heights
+plt.figure(figsize=(8, 6))
+count, bins, ignored = plt.hist(all_wave_heights, bins=30, density=True, alpha=0.6, color='b', edgecolor='black')
+
+# Fit a Rayleigh distribution to the data
+param = rayleigh.fit(all_wave_heights)  # Fit returns the parameters for the Rayleigh distribution
+
+# Plot the Rayleigh PDF
+x = np.linspace(0, max(all_wave_heights), 100)
+pdf_fitted = rayleigh.pdf(x, *param)  # Generate the PDF using the fitted parameters
+plt.plot(x, pdf_fitted, 'r-', lw=2, label='Rayleigh PDF')
+
+# Add labels and title
+plt.xlabel('Wave Height (meters)')
+plt.ylabel('Density')
+plt.title('Histogram and Rayleigh PDF of Wave Heights')
+
+# Display the PDF and histogram plot
+plt.legend()
 plt.show()
