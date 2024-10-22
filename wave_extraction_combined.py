@@ -33,16 +33,16 @@ top_one_third_count = int(len(all_wave_heights_sorted) / 3)
 top_one_third_waves = all_wave_heights_sorted[:top_one_third_count]
 
 # Calculate the overall statistics
-overall_avg_wvht = all_wave_heights.mean()
-overall_rms_wvht = np.sqrt(np.mean(all_wave_heights**2))
-overall_significant_wvht = top_one_third_waves.mean()
-overall_max_wvht = all_wave_heights.max()
+avg_wvht = all_wave_heights.mean()
+rms_wvht = np.sqrt(np.mean(all_wave_heights**2))
+significant_wvht = top_one_third_waves.mean()
+max_wvht = all_wave_heights.max()
 
 # Plot the horizontal bar chart for wave height statistics
 plt.figure(figsize=(8, 6))
 bars = plt.barh(['Average Wave Height (H_z)', 'RMS Wave Height (H_rms)',
                  'Significant Wave Height (H_s)', 'Maximum Wave Height (H_max)'],
-                [overall_avg_wvht, overall_rms_wvht, overall_significant_wvht, overall_max_wvht],
+                [avg_wvht, rms_wvht, significant_wvht, max_wvht],
                 color=['blue', 'green', 'red', 'purple'])
 
 # Add values to each bar
