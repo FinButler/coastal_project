@@ -45,8 +45,8 @@ print(f'100 Year Return Period: {return_period:.2f} m')
 print(f"Significant Wave Height (H_s): {significant_wvht:.2f}")
 
 # Prepare data for the bar chart (including the APD)
-categories = ['Average Wave Height (H_z)', 'RMS Wave Height (H_rms)',
-              'Significant Wave Height (H_s)', 'Maximum Wave Height (H_max)', '100- Year Return Period' ]
+categories = ['H_z', 'H_rms',
+              'H_s', 'H_max', 'H_100' ]
 values = [avg_wvht, rms_wvht, significant_wvht, max_wvht, return_period]
 
 plt.figure(figsize=(8, 6))
@@ -58,7 +58,7 @@ for bar in bars:
              f'{bar.get_width():.2f}', va='center')
 
 
-plt.xlabel('Values')
-plt.title('Wave Height and Period Statistics Averaged Over All Years')
+plt.xlabel('Wave Height (m)')
+plt.title('Wave Height Stats Over All Years')
 
 plt.show()
