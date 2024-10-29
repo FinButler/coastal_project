@@ -8,9 +8,9 @@ data_path = 'project_data/'
 # List of years
 dates = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 
-# Lists to store all wave height and average period data from all years
+# Lists to store all wave height and significant period data from all years
 all_wave_heights = []
-all_average_periods = []
+all_periods = []
 
 # Loop over each year
 for date in dates:
@@ -21,30 +21,36 @@ for date in dates:
 
     # Append the wave heights and average periods for the current year to the respective lists
     all_wave_heights.extend(df_filtered['WVHT'].tolist())
-    all_average_periods.extend(df_filtered['APD'].tolist())
+    all_periods.extend(df_filtered['APD'].tolist())
 
 all_wave_heights = pd.Series(all_wave_heights)
-all_average_periods = pd.Series(all_average_periods)
+all_periods = pd.Series(all_periods)
 
 # Sort the wave height data to calculate the top one-third of wave heights
 all_wave_heights_sorted = all_wave_heights.sort_values(ascending=False)
 top_one_third_count = int(len(all_wave_heights_sorted) / 3)
 top_one_third_waves = all_wave_heights_sorted[:top_one_third_count]
 
+# Find periods relating to significant waves
+top_one_third_periods = all_periods[top_one_third_waves.index]
+
 # Calculate the overall statistics for wave heights
 avg_wvht = all_wave_heights.mean()
 rms_wvht = np.sqrt(np.mean(all_wave_heights**2))
 significant_wvht = top_one_third_waves.mean()
 max_wvht = all_wave_heights.max()
-avg_apd = all_average_periods.mean()  # Mean of all APD values
+avg_apd = top_one_third_periods.mean()
 return_period = np.sqrt(np.log(avg_apd/(100*365*24*3600))*(-(significant_wvht**2))/2)
 
 
-print(f'Average Wave Period (APD) Over All Years: {avg_apd:.2f} seconds')
+print(f'Average Significant Wave Period: {avg_apd:.2f} seconds')
 print(f'100 Year Return Period: {return_period:.2f} m')
 print(f"Significant Wave Height (H_s): {significant_wvht:.2f}")
 
-# Prepare data for the bar chart (including the APD)
+# Check that periods correspond to significant waves
+# print(top_one_third_waves.head())
+# print(top_one_third_periods.head())
+
 categories = ['H_z', 'H_rms',
               'H_s', 'H_max', 'H_100' ]
 values = [avg_wvht, rms_wvht, significant_wvht, max_wvht, return_period]
