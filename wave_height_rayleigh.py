@@ -3,21 +3,36 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import rayleigh
 
+
+
 data_path = 'project_data/'
 
-# List of years
+use_situ = True
+
 dates = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 
 all_wave_heights = []
 
-# Loop over each year
-for date in dates:
-    df = pd.read_csv(data_path + '44095h' + str(date) + '.txt', sep=r'\s+', header=0, skiprows=[1], usecols=['WVHT'])
-    df = df.dropna(subset=['WVHT'])
-    df_filtered = df[df['WVHT'] != 99]
-    all_wave_heights.extend(df_filtered['WVHT'].tolist())
+if use_situ == True:
 
-all_wave_heights = pd.Series(all_wave_heights)
+    for date in dates:
+        df = pd.read_csv(data_path + '44095h' + str(date) + '.txt', sep=r'\s+', header=0, skiprows=[1], usecols=['WVHT'])
+        df = df.dropna(subset=['WVHT'])
+        df_filtered = df[df['WVHT'] != 99]
+        all_wave_heights.extend(df_filtered['WVHT'].tolist())
+
+    all_wave_heights = pd.Series(all_wave_heights)
+
+elif use_situ == False:
+
+    df = pd.read_csv("project_data/off_sig_h.csv", skiprows=7)
+
+    # Check and strip any whitespace from column names
+    df.columns = df.columns.str.strip()
+
+    all_wave_heights.extend(df['VHM0_WW'].dropna().tolist())
+
+    all_wave_heights = pd.Series(all_wave_heights)
 
 # Sort the data to calculate the top one-third of wave heights
 all_wave_heights_sorted = all_wave_heights.sort_values(ascending=False)

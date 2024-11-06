@@ -12,16 +12,34 @@ dates = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 all_wave_heights = []
 all_periods = []
 
-# Loop over each year
-for date in dates:
+use_situ = False
 
-    df = pd.read_csv(data_path + '44095h' + str(date) + '.txt', sep=r'\s+', header=0, skiprows=[1], usecols=['WVHT', 'APD'])
-    df = df.dropna(subset=['WVHT', 'APD'])
-    df_filtered = df[(df['WVHT'] != 99) & (df['APD'] != 99)]  # Apply both filters
+if use_situ == True:
 
-    # Append the wave heights and average periods for the current year to the respective lists
-    all_wave_heights.extend(df_filtered['WVHT'].tolist())
-    all_periods.extend(df_filtered['APD'].tolist())
+    for date in dates:
+
+        df = pd.read_csv(data_path + '44095h' + str(date) + '.txt', sep=r'\s+', header=0, skiprows=[1], usecols=['WVHT', 'APD'])
+        df = df.dropna(subset=['WVHT', 'APD'])
+        df_filtered = df[(df['WVHT'] != 99) & (df['APD'] != 99)]  # Apply both filters
+
+        # Append the wave heights and average periods for the current year to the respective lists
+        all_wave_heights.extend(df_filtered['WVHT'].tolist())
+        all_periods.extend(df_filtered['APD'].tolist())
+
+elif use_situ == False:
+
+    df = pd.read_csv("project_data/off_sig_h.csv", skiprows=7)
+    # Check and strip any whitespace from column names
+    df.columns = df.columns.str.strip()
+
+    all_wave_heights.extend(df['VHM0_WW'].dropna().tolist())
+    all_periods.extend(df['VTM01_WW'].dropna().tolist())
+
+    all_wave_heights = pd.Series(all_wave_heights)
+    all_periods = pd.Series(all_periods)
+
+
+
 
 all_wave_heights = pd.Series(all_wave_heights)
 all_periods = pd.Series(all_periods)
