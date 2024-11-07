@@ -7,7 +7,7 @@ from scipy.stats import rayleigh
 
 data_path = 'project_data/'
 
-use_situ = True
+use_situ = False
 
 dates = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 
@@ -27,10 +27,10 @@ elif use_situ == False:
 
     df = pd.read_csv("project_data/off_sig_h.csv", skiprows=7)
 
-    # Check and strip any whitespace from column names
     df.columns = df.columns.str.strip()
-
-    all_wave_heights.extend(df['VHM0_WW'].dropna().tolist())
+    df = df.dropna(subset=['VHM0_WW'])
+    df_filtered = df[df['VHM0_WW'] != 0]
+    all_wave_heights.extend(df_filtered['VHM0_WW'].tolist())
 
     all_wave_heights = pd.Series(all_wave_heights)
 
