@@ -38,9 +38,6 @@ elif use_situ == False:
     all_wave_heights = pd.Series(all_wave_heights)
     all_periods = pd.Series(all_periods)
 
-
-
-
 all_wave_heights = pd.Series(all_wave_heights)
 all_periods = pd.Series(all_periods)
 
@@ -51,6 +48,13 @@ top_one_third_waves = all_wave_heights_sorted[:top_one_third_count]
 
 # Find periods relating to significant waves
 top_one_third_periods = all_periods[top_one_third_waves.index]
+
+# Calculate Period of all extreme waves
+wave_heights_above_4m = all_wave_heights[all_wave_heights > 4]
+periods_above_4m = all_periods[wave_heights_above_4m.index]
+max_periods = periods_above_4m.mean()
+
+
 
 # Calculate the overall statistics for wave heights
 avg_wvht = all_wave_heights.mean()
@@ -65,58 +69,74 @@ return_period = 10.84
 print(f'Average Significant Wave Period: {avg_apd:.2f} seconds')
 print(f'100 Year Return Period: {return_period:.2f} m')
 print(f"Significant Wave Height (H_s): {significant_wvht:.2f}")
+print(f'Average Wave Period for Heights > 4m: {max_periods:.2f} seconds')
 
-# Check that periods correspond to significant waves
-# print(top_one_third_waves.head())
-# print(top_one_third_periods.head())
+# Offshore Celerity Calculations
+offshore_depth = 19
 
-# categories = ['H_z', 'H_rms',
-#               'H_s', 'H_max', 'H_100' ]
-# values = [avg_wvht, rms_wvht, significant_wvht, max_wvht, return_period]
+lambda_s = (9.81*avg_apd**2)/(2*np.pi)
+lambda_100 = (9.81*max_periods**2)/(2*np.pi)
 
-categories = ['$H_{avg}$', '$H_s$',
-              '$H_{max}$', '$H_{100}$']
-values = [avg_wvht, significant_wvht, max_wvht, return_period]
+omega_s = 2*np.pi/avg_apd
+omega_100 = 2*np.pi/max_periods
 
-plt.figure(figsize=(8, 6))
-# bars = plt.barh(categories, values, color=['blue', 'green', 'red','purple'])
-#
-#
-# for bar in bars:
-#     plt.text(bar.get_width() + 0.05, bar.get_y() + bar.get_height()/2,
-#              f'{bar.get_width():.2f}', va='center')
-#
-#
-# plt.xlabel('Wave Height (m)')
-# plt.xlim(right=9)
-# plt.title('Wave Height Stats Over All Years')
-#
-# plt.show()
+deep_group_cs = (9.81/(2*np.pi))*avg_apd
+deep_group_c100 = (9.81/(2*np.pi))*max_periods
 
-# Define colors for the bars
-colors = ['blue', 'green', 'red', 'purple']
+deep_cs = (9.81/(2*np.pi))*avg_apd
+deep_c100 = (9.81/(2*np.pi))*max_periods
 
-# Create the bars with edgecolors and dotted linestyle
-bars = plt.barh(
-    categories,
-    values,
-    color=[plt.cm.colors.to_rgba(color, alpha=0.7) for color in colors],  # Translucent fill
-    edgecolor=colors,  # Opaque edges
-    linewidth=2,       # Thickness of the dotted outline
-    linestyle=':'      # Dotted line style
-)
+# Onshore Celerity Calculations
 
-# Add value labels to the bars
-for bar in bars:
-    plt.text(
-        bar.get_width() + 0.05,  # Position slightly to the right of the bar
-        bar.get_y() + bar.get_height() / 2,  # Vertically center the text
-        f'{bar.get_width():.2f}',  # Format value to two decimal places
-        va='center'
-    )
+onshore_depth = list(range(19, 0, -1))
+onshore_group_cs = []
+onshore_group_c100 = []
 
-plt.xlabel('Wave Height (m)')
-plt.xlim(right=9)  # Adjust x-axis limit if necessary
-plt.title('Wave Height Statistics')
 
-plt.show()
+for depth in onshore_depth:
+    shallow_group_cs = 0.5 * (
+        1 + (4 * np.pi * (depth / lambda_s)) / np.sinh(4 * np.pi * (depth / lambda_s))
+    ) * ((9.81 * avg_apd) / (2 * np.pi)) * np.tanh((2 * np.pi * depth) / lambda_s)
+    onshore_group_cs.append(shallow_group_cs)
+
+    shallow_group_c100 = 0.5 * (
+        1 + (4 * np.pi * (depth / lambda_100)) / np.sinh(4 * np.pi * (depth / lambda_100))
+    ) * ((9.81 * max_periods) / (2 * np.pi)) * np.tanh((2 * np.pi * depth) / lambda_100)
+    onshore_group_c100.append(shallow_group_c100)
+
+onshore_cs = lambda_s/avg_apd
+onshore_c100 = lambda_100/max_periods
+
+# Shoaling Coefficients
+Ks_s = []
+Ks_100 = []
+
+for cs in onshore_group_cs:
+    Ks_sig = np.sqrt(deep_group_cs/cs)
+    Ks_s.append(Ks_sig)
+
+for c100 in onshore_group_c100:
+    Ks_ret = np.sqrt(deep_group_c100/c100)
+    Ks_100.append(Ks_ret)
+
+
+# Refraction Coefficients
+
+shore_angle = 80
+wave_angle = 65
+
+y_deep = shore_angle - wave_angle
+
+
+
+print("Significant Omega: " + str(omega_s))
+print("100 Omega: " + str(omega_100))
+print("Significant lambda: " + str(lambda_s))
+print("100 lambda: " + str(lambda_100))
+print("Significant cg offshore: " + str(deep_group_cs))
+print("100 cg offshore: " + str(deep_group_c100))
+
+print(Ks_s)
+print(Ks_100)
+
+print(y_deep)

@@ -7,7 +7,7 @@ from scipy.stats import rayleigh
 
 data_path = 'project_data/'
 
-use_situ = False
+use_situ = True
 
 dates = [2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 
@@ -48,7 +48,7 @@ max_wvht = all_wave_heights.max()
 
 # Plot the histogram and rayleigh for wave heights
 plt.figure(figsize=(8, 6))
-count, bins, ignored = plt.hist(all_wave_heights, bins=30, density=True, alpha=0.6, color='b', edgecolor='black')
+count, bins, ignored = plt.hist(all_wave_heights, bins=30, density=True, alpha=1, color='lightblue', edgecolor='blue', linewidth= 1, linestyle = ':' )
 param = rayleigh.fit(all_wave_heights)
 x = np.linspace(0, max(all_wave_heights), 100)
 pdf_fitted = rayleigh.pdf(x, *param)

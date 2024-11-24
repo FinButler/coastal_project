@@ -40,27 +40,39 @@ def main():
     wave_heights = all_data['WVHT']
 
     model = EVA(wave_heights)
-    model.get_extremes("POT", threshold=3, r="24h")
+    model.get_extremes("POT", threshold=4, r="24h")
 
     model.plot_extremes(show_clusters=True)
 
-    plot_parameter_stability(wave_heights)
+    # plot_parameter_stability(wave_heights)
+    #
+    # plot_return_value_stability(
+    #     wave_heights,
+    #     return_period=100,
+    #     thresholds=np.linspace(3, 6.8, 20),
+    #     alpha=0.95,
+    # )
+    #
+    # plot_threshold_stability(
+    #     wave_heights,
+    #     return_period=100,
+    #     thresholds=np.linspace(3, 6.8, 20),
+    # )
+    #
 
-    plot_return_value_stability(
-        wave_heights,
-        return_period=100,
-        thresholds=np.linspace(3, 6.8, 20),
-        alpha=0.95,
-    )
 
-    plot_threshold_stability(
-        wave_heights,
-        return_period=100,
-        thresholds=np.linspace(3, 6.8, 20),
-    )
+
 
     model.fit_model()
-    model.plot_diagnostic(alpha=0.95)
+
+    summary = model.get_summary(
+        return_period=[1, 2, 5, 10, 25, 50, 100],
+        alpha=0.95,
+        n_samples=1000,
+        )
+    print(summary)
+
+    model.plot_diagnostic(return_period=[0.2, 1, 2, 5, 10, 25, 50, 100], alpha=0.95)
 
     plt.show()
 
