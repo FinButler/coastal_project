@@ -63,13 +63,27 @@ avg_apd = top_one_third_periods.mean()
 # return_period = np.sqrt(np.log(avg_apd/(100*365*24*3600))*(-(significant_wvht**2))/2)
 return_period = 10.84
 
-print(f'Average Significant Wave Period: {avg_apd:.2f} seconds')
-print(f'100 Year Return Period: {return_period:.2f} m')
-print(f"Significant Wave Height (H_s): {significant_wvht:.2f}")
-print(f'Average Wave Period for Heights > 4m: {max_periods:.2f} seconds')
+# Bathymetry extraction
+
+data = np.loadtxt("project_data/transect_cubic_spline_14750_entries.csv", delimiter=",", skiprows=1)
+
+# Separate the distance and depth data
+distances = data[:, 0]  # First column is distance (m)
+depths = data[:, 1]     # Second column is depth (m)
+
+# Convert to lists if needed
+distance_list = distances.tolist()
+depth_list = depths.tolist()
+plotting_depth = []
+
+
+for depth in depth_list:
+    plot_depth = -1 * depth
+    plotting_depth.append(plot_depth)
+
 
 # Offshore Celerity Calculations
-offshore_depth = 26
+offshore_depth = 30
 
 omega_s = 2*np.pi/avg_apd
 omega_100 = 2*np.pi/max_periods
@@ -85,7 +99,7 @@ lambda_100 = deep_cs/(max_periods**-1)
 
 # Onshore Celerity Calculations
 
-onshore_depth = list(range(26, 0, -1))
+onshore_depth = depth_list
 onshore_group_cs = []
 onshore_group_c100 = []
 onshore_cs = []
@@ -175,39 +189,44 @@ for depth in onshore_depth:
     Hb100 = 0.17 * lambda_100 * (1 - np.exp(((-1.5 * np.pi * depth) / (lambda_100)) * (1 + 15 * (np.tan(25/15000)) ** (4 / 3))))
     H_b100.append(Hb100)
 
-print(Ks_s)
-print(Ks_100)
-print(H_bs)
-print(H_b100)
-print(h_bs)
-print(h_b100)
+# Theta Differences
+
+diff_s = [abs(theta_s[i+1] - theta_s[i]) for i in range(len(theta_s) - 1)]
+diff_100 = [abs(theta_100[i+1] - theta_100[i]) for i in range(len(theta_100) - 1)]
+
+approach_theta_s = np.concatenate(([65], np.cumsum(diff_s) + 65))
+approach_theta_100 = np.concatenate(([65], np.cumsum(diff_100) + 65))
 
 # Plotting
 fig, ax1 = plt.subplots(figsize=(10, 6))
 
 # Plot sig_height and ret_height on primary y-axis
-ax1.plot(onshore_depth, sig_height, label="Significant Wave Height (H_s)", color="blue", marker="o")
-ax1.plot(onshore_depth, ret_height, label="Return Period Height (H_100)", color="green", marker="o")
-ax1.plot(onshore_depth, H_bs, label="Significant Wave Breaking Height (H_s)", color="blue", marker="x")
-ax1.plot(onshore_depth, H_b100, label="Return Period Breaking Height (H_100)", color="green", marker="x")
-ax1.set_xlabel("Onshore Depth (m)")
-ax1.set_ylabel("Wave Height (m)")
-ax1.set_xlim(max(onshore_depth), min(onshore_depth))  # Reverse depth axis for onshore
+ax1.plot(distance_list, sig_height, label="Significant Wave Height ($H_s$)", color="blue")
+ax1.plot(distance_list, ret_height, label="Return Period Height ($H_{100}$)", color="green")
+ax1.plot(distance_list, plotting_depth, label="Sea Depth", color="red")
+
+# ax1.plot(onshore_depth, H_bs, label="Significant Wave Breaking Height (H_s)", color="blue", marker="x")
+# ax1.plot(onshore_depth, H_b100, label="Return Period Breaking Height (H_100)", color="green", marker="x")
+ax1.set_xlabel("Distance From Shoreline (m)")
+ax1.set_ylabel("Height (m)")
+ax1.set_xlim(max(distance_list), min(distance_list))
+ax1.set_ylim(-30, 35)
 ax1.legend(loc="upper left")
 
-# Create secondary y-axis for Ks_s and Ks_100
-# ax2 = ax1.twinx()
-# ax2.plot(onshore_depth, Ks_s, label="Shoaling Coefficient (K_s_s)", color="red", linestyle="--", marker="x")
-# ax2.plot(onshore_depth, Ks_100, label="Shoaling Coefficient (K_s_100)", color="purple", linestyle="--", marker="x")
-# ax2.set_ylabel("Shoaling Coefficient (Non-Dimensional)")
-# ax2.legend(loc="upper right")
+ax1.plot([230, 230], [-1.2, 5.1], color='blue', linestyle=':')  # Vertical line
+ax1.plot([max(distance_list), 230], [5.1, 5.1], color='blue', linestyle=':')  # Horizontal line
+ax1.scatter(230, 5.1, color='black', marker= "x", label=f'Critical Breaking Point')  # Marker at the top of the line
+
+ax1.plot([550, 550], [-5.2, 16.1], color='green', linestyle=':')  # Vertical line
+ax1.plot([max(distance_list), 550], [16.1, 16.1], color='green', linestyle=':')  # Horizontal line
+ax1.scatter(550, 16.1, color='black', marker= "x",label=f'Point at (x=, y=)')  # Marker at the top of the line
+
+ax1.plot([max(distance_list), min(distance_list)], [0, 0], color='lightblue', linestyle='--')
 
 # Title and grid
-plt.title("Wave Heights and Shoaling Coefficients vs Onshore Depth")
+plt.title("Evolution of Wave Heights as Waves Approach Coastline")
 plt.grid(alpha=0.3)
 
 # Show plot
 plt.tight_layout()
 plt.show()
-
-
