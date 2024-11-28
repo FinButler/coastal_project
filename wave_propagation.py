@@ -76,11 +76,9 @@ distance_list = distances.tolist()
 depth_list = depths.tolist()
 plotting_depth = []
 
-
 for depth in depth_list:
     plot_depth = -1 * depth
     plotting_depth.append(plot_depth)
-
 
 # Offshore Celerity Calculations
 offshore_depth = 30
@@ -189,6 +187,10 @@ for depth in onshore_depth:
     Hb100 = 0.17 * lambda_100 * (1 - np.exp(((-1.5 * np.pi * depth) / (lambda_100)) * (1 + 15 * (np.tan(25/15000)) ** (4 / 3))))
     H_b100.append(Hb100)
 
+N_i = (np.tan(1/100))/(np.sqrt(significant_wvht/lambda_s))
+
+print(str(N_i))
+
 # Theta Differences
 
 diff_s = [abs(theta_s[i+1] - theta_s[i]) for i in range(len(theta_s) - 1)]
@@ -204,29 +206,26 @@ fig, ax1 = plt.subplots(figsize=(10, 6))
 ax1.plot(distance_list, sig_height, label="Significant Wave Height ($H_s$)", color="blue")
 ax1.plot(distance_list, ret_height, label="Return Period Height ($H_{100}$)", color="green")
 ax1.plot(distance_list, plotting_depth, label="Sea Depth", color="red")
-
-# ax1.plot(onshore_depth, H_bs, label="Significant Wave Breaking Height (H_s)", color="blue", marker="x")
-# ax1.plot(onshore_depth, H_b100, label="Return Period Breaking Height (H_100)", color="green", marker="x")
+ax1.plot([max(distance_list), min(distance_list)], [0, 0], color='lightblue', linestyle='--', label= "sea level")
+ax1.plot(distance_list, H_bs, label="Goda Breaking Height (H_s)", color="blue", linestyle=":")
+ax1.plot(distance_list, H_b100, label="GodaBreaking Height (H_100)", color="green", linestyle=":")
 ax1.set_xlabel("Distance From Shoreline (m)")
 ax1.set_ylabel("Height (m)")
 ax1.set_xlim(max(distance_list), min(distance_list))
 ax1.set_ylim(-30, 35)
-ax1.legend(loc="upper left")
-
-ax1.plot([230, 230], [-1.2, 5.1], color='blue', linestyle=':')  # Vertical line
-ax1.plot([max(distance_list), 230], [5.1, 5.1], color='blue', linestyle=':')  # Horizontal line
-ax1.scatter(230, 5.1, color='black', marker= "x", label=f'Critical Breaking Point')  # Marker at the top of the line
-
-ax1.plot([550, 550], [-5.2, 16.1], color='green', linestyle=':')  # Vertical line
-ax1.plot([max(distance_list), 550], [16.1, 16.1], color='green', linestyle=':')  # Horizontal line
-ax1.scatter(550, 16.1, color='black', marker= "x",label=f'Point at (x=, y=)')  # Marker at the top of the line
-
-ax1.plot([max(distance_list), min(distance_list)], [0, 0], color='lightblue', linestyle='--')
+ax1.plot([230, 230], [-1.2, 5.1], color='blue', linestyle='dashdot')  # Vertical line
+ax1.plot([max(distance_list), 230], [5.1, 5.1], color='blue', linestyle='dashdot')  # Horizontal line
+ax1.scatter(230, 5.1, color='black', marker= "x", label=f'McGowan Breaking Point')  # Marker at the top of the line
+ax1.plot([550, 550], [-5.2, 16.1], color='green', linestyle='dashdot')  # Vertical line
+ax1.plot([max(distance_list), 550], [16.1, 16.1], color='green', linestyle='dashdot')  # Horizontal line
+ax1.scatter(550, 16.1, color='black', marker= "x")  # Marker at the top of the line
 
 # Title and grid
-plt.title("Evolution of Wave Heights as Waves Approach Coastline")
+plt.title("Evolution of Wave Heights as Waves Approach Coastline from Buoy Location")
 plt.grid(alpha=0.3)
+ax1.legend(loc="lower right")
 
 # Show plot
+
 plt.tight_layout()
 plt.show()
