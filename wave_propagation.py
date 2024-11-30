@@ -177,6 +177,18 @@ h_bs = (((deep_cs * significant_wvht**2) / (2 * (0.78**2) * (np.sqrt(9.81)))) * 
 
 h_b100 = (((deep_cs * return_period**2) / (2 * (0.78**2) * (np.sqrt(9.81)))) * np.cos(np.degrees(15)))**(2/5)
 
+Hdec_s = []
+Hdec_100 = []
+
+# Decay after Breaking
+
+for depth in onshore_depth:
+    hdec_s = 0.78 * h_bs * (depth / h_bs) ** (0.657 * 0.78 + (0.0438 * 0.78 / 0.01) - 0.0096 * 0.01 + 0.032)
+    Hdec_s.append(hdec_s)
+
+    hdec_100 = 0.78 * h_b100 * (depth / h_b100) ** (0.657 * 0.78 + (0.0438 * 0.78 / 0.01) - 0.0096 * 0.01 + 0.032)
+    Hdec_100.append(hdec_100)
+
 H_bs = []
 H_b100 = []
 
@@ -200,28 +212,58 @@ approach_theta_s = np.concatenate(([65], np.cumsum(diff_s) + 65))
 approach_theta_100 = np.concatenate(([65], np.cumsum(diff_100) + 65))
 
 # Plotting
+
+
+# # stop at 695
+distance_array = np.array(distance_list)
+height_array = np.array(ret_height)
+height_array_s = np.array(sig_height)
+b_height_array_s = np.array(Hdec_s)
+b_height_array_100 = np.array(Hdec_100)
+
+# Apply the filter
+mask_100 = distance_array >= 695
+mask_s = distance_array >= 291
+b_mask_100 = distance_array <= 695
+b_mask_s = distance_array <= 291
+
+plotting_distance_s = distance_array[mask_s]
+plotting_distance_100 = distance_array[mask_100]
+plotting_s = height_array_s[mask_s]
+plotting_H100 = height_array[mask_100]
+
+b_plotting_distance_s = distance_array[b_mask_s]
+b_plotting_distance_100 = distance_array[b_mask_100]
+
+b_height_s = b_height_array_s[b_mask_s]
+b_height_100 = b_height_array_100[b_mask_100]
+
+
+
+
+
 fig, ax1 = plt.subplots(figsize=(10, 6))
 
 # Plot sig_height and ret_height on primary y-axis
-ax1.plot(distance_list, sig_height, label="Significant Wave Height ($H_s$)", color="blue")
-ax1.plot(distance_list, ret_height, label="Return Period Height ($H_{100}$)", color="green")
+ax1.plot(plotting_distance_s, plotting_s, label="Significant Wave Height ($H_s$)", color="blue")
+ax1.plot(plotting_distance_100, plotting_H100, label="Return Period Height ($H_{100}$)", color="green")
 ax1.plot(distance_list, plotting_depth, label="Sea Depth", color="red")
 ax1.plot([max(distance_list), min(distance_list)], [0, 0], color='lightblue', linestyle='--', label= "sea level")
-ax1.plot(distance_list, H_bs, label="Goda Breaking Height (H_s)", color="blue", linestyle=":")
-ax1.plot(distance_list, H_b100, label="GodaBreaking Height (H_100)", color="green", linestyle=":")
+ax1.plot(b_plotting_distance_s, b_height_s, label="Wave Decay Post-Breaking ($H_s$)", color="blue", linestyle=":")
+ax1.plot(b_plotting_distance_100, b_height_100, label="Wave Decay Post-Breaking ($H_{100}$)", color="green", linestyle=":")
 ax1.set_xlabel("Distance From Shoreline (m)")
 ax1.set_ylabel("Height (m)")
-ax1.set_xlim(max(distance_list), min(distance_list))
+ax1.set_xlim(1000, min(distance_list))
 ax1.set_ylim(-30, 35)
-ax1.plot([230, 230], [-1.2, 5.1], color='blue', linestyle='dashdot')  # Vertical line
-ax1.plot([max(distance_list), 230], [5.1, 5.1], color='blue', linestyle='dashdot')  # Horizontal line
-ax1.scatter(230, 5.1, color='black', marker= "x", label=f'McGowan Breaking Point')  # Marker at the top of the line
-ax1.plot([550, 550], [-5.2, 16.1], color='green', linestyle='dashdot')  # Vertical line
-ax1.plot([max(distance_list), 550], [16.1, 16.1], color='green', linestyle='dashdot')  # Horizontal line
-ax1.scatter(550, 16.1, color='black', marker= "x")  # Marker at the top of the line
+# ax1.plot([230, 230], [-1.2, 5.1], color='blue', linestyle='dashdot')  # Vertical line
+# ax1.plot([max(distance_list), 230], [5.1, 5.1], color='blue', linestyle='dashdot')  # Horizontal line
+ax1.scatter(291, 4.1, color='black', marker= "x", label=f'Breaking Point')  # Marker at the top of the line
+# ax1.plot([550, 550], [-5.2, 16.1], color='green', linestyle='dashdot')  # Vertical line
+# ax1.plot([max(distance_list), 550], [16.1, 16.1], color='green', linestyle='dashdot')  # Horizontal line
+ax1.scatter(695, 14.4, color='black', marker= "x")  # Marker at the top of the line
 
 # Title and grid
-plt.title("Evolution of Wave Heights as Waves Approach Coastline from Buoy Location")
+plt.title("Evolution of Wave Heights as Waves Approach the Shore")
 plt.grid(alpha=0.3)
 ax1.legend(loc="lower right")
 
