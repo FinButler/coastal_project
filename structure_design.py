@@ -112,51 +112,70 @@ rho_w = 1029
 
 delta = (rho_r/rho_w) - 1
 
-alpha = 1/5
+alpha = 1/4
 
-M_50 = (rho_r * Hs ** 3)/(K_D * (1/np.tan(alpha)) * delta ** 3) # Hudson Formula
 
-Dn_50 = (-0.14 * Hs * (Hs / lambda_s) ** (-1/3)) / (delta * np.log((h_c/h) / (2.1 + 0.1 * S)))
-
-N_s = ((K_D * (1 / np.tan(alpha))) ** (1/3))/1.27
-
-N = Hs/(delta * Dn_50)
-
-G = 1.4 # for rock
-
-p = 0.5
-
-N_od = G * (1 - p) * S
-
-# print(N_s)
-# print(N)
 
 # Armour Stability using Eurocodes
 
 P = 0.3
 n = 4000
-
-surf = (np.tan(alpha))/(np.sqrt(2 * np.pi * Hs / (9.81 * avg_apd ** 2)))
+surf = 2.5
 
 Euro_D50_breaking = (Hs * np.sqrt(surf)) / ((delta) * (6.2 * (P ** 0.18)) * (S / (np.sqrt(n))) ** 0.2) # breaking
 Euro_D50_surging = (Hs) / ((delta) * (P ** -0.13) * ((S / (np.sqrt(n))) ** 0.2) * np.sqrt((1 / np.tan(alpha))) * (surf ** P))
+Euro_M50 = (Euro_D50_breaking ** 3) * rho_r
 
-Euro_N = Hs / (delta * Euro_D50_breaking)
+max_p_index = top_one_third_periods.idxmax()
+max_p_wave = top_one_third_waves[max_p_index]
+s_op = 2 * np.pi * max_p_wave / (9.81 * max(top_one_third_periods) ** 2)
+f = (1.25 - 4.8 * ((h_c - h) / Hs) * np.sqrt(s_op / (2 * np.pi) )) ** -1
 
-print(surf)
+red_D50 = f * Euro_D50_breaking
+red_M50 = (red_D50 ** 3) * rho_r
 
-print(Euro_D50_surging)
-print(Euro_N)
-print(N_s)
+head_m50 = (1.2 ** 3) * rho_r
+
+# Stability Checks
+
+N_trunk = Hs / (delta * red_D50)
+N_head = Hs / (delta * 1.2)
+
+Trunk_N_s = ((K_D * (1 / np.tan(alpha))) ** (1/3))
+Head_N_s = ((1.3 * (1 / np.tan(alpha))) ** (1/3))
+
+Trunk_stability = N_trunk / Trunk_N_s
+Head_stability = N_head / Head_N_s
+
+D_void = 2 * np.sqrt(((1.14 ** 2) / np.pi) * (1 - np.pi / 4)) / 4
+
+print(Trunk_stability)
+print(Head_stability)
+print(D_void)
+d_50 = list(np.arange(0, 2, 0.01))
+t_stab = []
+h_stab = []
+
+for size in d_50:
+    Ntr = Hs / (delta * size)
+    tr_stab = Ntr / Trunk_N_s
+    t_stab.append(tr_stab)
+
+    Nhe = Hs / (delta * size)
+    he_stab = Nhe / Head_N_s
+    h_stab.append(he_stab)
+
+
+
 
 
 # Toe Stability - Trunk
 
-Dn_50_t = 0.5 * Dn_50
+Dn_50_t = 0.5 * red_D50
 
 h_t = h - Dn_50_t
 
-Bt = 1
+Bt = 4 * red_D50
 
 s = 2 * np.pi * Hs / (9.81 * avg_apd ** 2)
 
@@ -168,33 +187,52 @@ Ns_t = 1.2 + 11.2 * ((h_t/h) ** (7/4)) * ((Bt/Hs) ** (-1/10)) * (s ** (1/6)) * (
 
 R_c = h_c - h
 
-max_p_index = top_one_third_periods.idxmax()
-max_p_wave = top_one_third_waves[max_p_index]
-
 s_op = 2 * np.pi * max_p_wave / (9.81 * max(top_one_third_periods) ** 2)
 
-b = -5.42 * s_op + 0.0323 * (Hs/Dn_50) - 0.0017 * (B/Dn_50) ** (1.84) + 0.51
+b = -5.42 * s_op + 0.0323 * (Hs/red_D50) - 0.0017 * (B/red_D50) ** (1.84) + 0.51
 
 Rc_range = list(np.arange(-2, 3, 0.5))
 Ct_range = []
 
 for Rc in Rc_range:
-    Ct = (0.031 * (Hs/Dn_50) - 0.24) * (Rc/Dn_50) + b
+    Ct = (0.031 * (Hs/red_D50) - 0.24) * (Rc/red_D50) + b
     Ct_range.append(Ct)
 
-Ct = (0.031 * (Hs/Dn_50) - 0.24) * (R_c/Dn_50) + b # Van der meer and d'angermond
+Ct = (0.031 * (Hs/red_D50) - 0.24) * (R_c/red_D50) + b # Van der meer and d'angermond
 
 # S_op, Hs/Dn50 and Rc/Dn50 are satisfied
 
-# plt.figure(figsize=(10, 6))
-# plt.plot(Rc_range/Dn_50, Ct_range, marker='x', color='blue')
-# plt.xlabel('Rc/D50')
-# plt.ylabel('Ct')
-# plt.title('Wave Transmission')
-# plt.show()
+plt.figure(figsize=(10, 6))
+plt.plot(Ct_range, Rc_range, color='purple', label = "$C_t$")
 
-# print(Dn_50)
-# print(str(B/Dn_50))
-# print(str(Hs/Dn_50))
-# print(str(s_op))
-# print(str(Ct))
+plt.plot([0.15, 0.544], [0, 0], color='blue', linestyle='--', label= "MLLW")
+plt.plot([0.544, 0.544], [-2, 0], color='blue', linestyle='--')
+
+plt.plot([0.15, 0.619], [-0.5, -0.5], color='lightblue', linestyle='--', label= "MSL")
+plt.plot([0.619, 0.619], [-2, -0.5], color='lightblue', linestyle='--')
+
+
+plt.plot([0.15, 0.694], [-1, -1], color='red', linestyle='--', label= "MHHW")
+plt.plot([0.694, 0.694], [-2, -1], color='red', linestyle='--')
+plt.ylim(-2, 2)
+plt.xlim(0.15, 0.75)
+plt.ylabel('$R_c$')
+plt.xlabel('$C_t$')
+plt.title('Wave Transmission Coefficient for Submerged Breakwater with $h_c = 4.5m$')
+plt.legend(loc="upper right")
+plt.show()
+
+
+# plt.plot(d_50, t_stab, color = 'blue', label = 'Trunk, $K_D = 3.5$')
+# plt.plot(d_50, h_stab, color = 'red', label = 'Head, $K_D = 1.3$')
+# plt.plot([0, 1.14], [1, 1], color='lightblue', linestyle='--', label= "Stability Threshold")
+# plt.plot([0.82, 0.82], [0, 1], color='blue', linestyle='--', label= "Minimum Trunk $D_{n50}$")
+# plt.plot([1.14, 1.14], [0, 1], color='red', linestyle='--', label= "Minimum Head $D_{n50}$")
+# plt.ylim(0, 2)
+# plt.xlim(0.25, 2)
+# plt.xlabel('$D_{n50}$')
+# plt.ylabel('$N/N_s$')
+# plt.title('Stability Criteria for Trunk and Head of Rubble Mound')
+# plt.legend(loc="upper right")
+# plt.show()
+#
